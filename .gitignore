@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Go
+services/ingest/ingest
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+.venv/
