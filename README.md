@@ -1,17 +1,7 @@
 # AB Platform
 
-A self-serve A/B experimentation platform. Any app can plug into it to run experiments — define variants, consistently assign users, ingest events at scale, and view statistically significant results in real time.
+A self-serve A/B experimentation platform. Any app can plug into it to run experiments, define variants, consistently assign users, ingest events at scale, and view important results in real time.
 
----
-
-## Architecture
-
-```
-Frontend (React/TS)  →  FastAPI (Mgmt API)  →  Postgres   (experiment config)
-                                            →  Redis      (bucketing cache)
-                     →  Go Service (ingest) →  Kafka      (event streaming)
-                                            →  ClickHouse (event analytics)
-```
 
 ## Running Locally
 
@@ -23,7 +13,7 @@ This project uses a **hybrid dev setup**: infrastructure runs in Docker, applica
 docker compose up -d
 ```
 
-This starts: Postgres, ClickHouse, Redis, Kafka, Zookeeper.
+This starts: Postgres, ClickHouse, Redis, Kafka, and Zookeeper.
 
 ### 2. Run the API (FastAPI)
 
