@@ -4,18 +4,22 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/ab-platform/ingest/handlers"
+	kafkapkg "github.com/ab-platform/ingest/kafka"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"status":  "ok",
-		"service": "ingest",
-	})
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "service": "ingest"})
 }
 
 func main() {
+	kafkapkg.Init()
+
 	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/events", handlers.HandleEvent)
+
 	log.Println("Ingest service listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
