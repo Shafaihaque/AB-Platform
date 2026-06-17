@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from db.database import connect_db, disconnect_db
-from routers import experiments, assign
+from routers import experiments, assign, results
 
 
 @asynccontextmanager
@@ -15,6 +15,7 @@ app = FastAPI(title="AB Platform API", lifespan=lifespan)
 
 app.include_router(experiments.router)
 app.include_router(assign.router)
+app.include_router(results.router)
 
 
 @app.get("/health")

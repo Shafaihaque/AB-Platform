@@ -33,3 +33,20 @@ class VariantResponse(BaseModel):
     name: str
     traffic_weight: int
     created_at: datetime
+
+
+# --- Results models ---
+
+class VariantResult(BaseModel):
+    variant_id: str
+    variant_name: str
+    users: int
+    conversions: int
+    conversion_rate: float
+
+class ExperimentResult(BaseModel):
+    experiment_id: str
+    variants: list[VariantResult]
+    p_value: float | None
+    significant: bool
+    winner: str | None
