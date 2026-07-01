@@ -35,7 +35,7 @@ class VariantResponse(BaseModel):
     created_at: datetime
 
 
-# --- Results models ---
+#Results models
 
 class VariantResult(BaseModel):
     variant_id: str

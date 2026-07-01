@@ -1,0 +1,7 @@
+{
+  "name": "@ab-platform/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {}
+}
