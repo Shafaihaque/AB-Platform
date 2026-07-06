@@ -67,6 +67,18 @@ async def update_experiment_status(experiment_id: str, body: ExperimentStatusUpd
     return dict(row)
 
 
+@router.get("/{experiment_id}/variants", response_model=list[VariantResponse])
+async def list_variants(experiment_id: str):
+    """Returns all variants for an experiment."""
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT * FROM variants WHERE experiment_id = $1 ORDER BY created_at ASC",
+            experiment_id,
+        )
+    return [VariantResponse(**dict(row)) for row in rows]
+
+
 @router.post("/{experiment_id}/variants", response_model=VariantResponse, status_code=201)
 async def create_variant(experiment_id: str, body: VariantCreate):
     """Adds a variant to an existing experiment."""
