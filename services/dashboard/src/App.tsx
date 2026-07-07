@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import './App.css'
 import ExperimentList from './components/ExperimentList'
 import ExperimentResults from './components/ExperimentResults'
@@ -8,6 +8,15 @@ import type { Experiment } from './types'
 function App() {
   const [selected, setSelected] = useState<Experiment | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleUpdate = useCallback(async () => {
+    setRefreshKey(k => k + 1)
+    if (selected) {
+      const res = await fetch(`/api/experiments/${selected.id}`)
+      const updated = await res.json()
+      setSelected(updated)
+    }
+  }, [selected])
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -27,11 +36,16 @@ function App() {
         <div className="grid grid-cols-3 gap-8 max-w-7xl mx-auto">
           <div className="col-span-1 flex flex-col gap-6">
             <ExperimentCreate onCreated={() => setRefreshKey(k => k + 1)} />
-            <ExperimentList refreshKey={refreshKey} selectedId={selected?.id ?? null} onSelect={setSelected} />
+            <ExperimentList
+              refreshKey={refreshKey}
+              selectedId={selected?.id ?? null}
+              onSelect={setSelected}
+              onDeleted={() => { setRefreshKey(k => k + 1); setSelected(null); }}
+            />
           </div>
           <div className="col-span-2">
             {selected
-              ? <ExperimentResults experimentId={selected.id} experimentName={selected.name} />
+              ? <ExperimentResults experiment={selected} onUpdate={handleUpdate} />
               : (
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-64 flex flex-col items-center justify-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">

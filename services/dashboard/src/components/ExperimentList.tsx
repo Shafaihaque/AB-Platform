@@ -12,9 +12,10 @@ interface Props {
   refreshKey: number;
   selectedId: string | null;
   onSelect: (experiment: Experiment) => void;
+  onDeleted: () => void;
 }
 
-export default function ExperimentList({ refreshKey, selectedId, onSelect }: Props) {
+export default function ExperimentList({ refreshKey, selectedId, onSelect, onDeleted }: Props) {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
 
   useEffect(() => {
@@ -22,6 +23,12 @@ export default function ExperimentList({ refreshKey, selectedId, onSelect }: Pro
       .then((res) => res.json())
       .then((data) => setExperiments(data));
   }, [refreshKey]);
+
+  const handleDelete = async (e: React.MouseEvent, experimentId: string) => {
+    e.stopPropagation();
+    await fetch(`/api/experiments/${experimentId}`, { method: "DELETE" });
+    onDeleted();
+  };
 
   return (
     <div>
@@ -40,7 +47,7 @@ export default function ExperimentList({ refreshKey, selectedId, onSelect }: Pro
             <div
               key={experiment.id}
               onClick={() => onSelect(experiment)}
-              className={`flex items-start justify-between px-4 py-3.5 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0 ${
+              className={`group flex items-center justify-between px-4 py-3.5 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0 ${
                 selectedId === experiment.id
                   ? "bg-indigo-50 border-l-[3px] border-l-indigo-500"
                   : "hover:bg-gray-50"
@@ -52,9 +59,17 @@ export default function ExperimentList({ refreshKey, selectedId, onSelect }: Pro
                   <p className="text-xs text-gray-400 mt-0.5 truncate">{experiment.description}</p>
                 )}
               </div>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${STATUS_STYLES[experiment.status] ?? "bg-gray-100 text-gray-500"}`}>
-                {experiment.status}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={(e) => handleDelete(e, experiment.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-0.5 rounded"
+                >
+                  Delete
+                </button>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[experiment.status] ?? "bg-gray-100 text-gray-500"}`}>
+                  {experiment.status}
+                </span>
+              </div>
             </div>
           ))}
         </div>

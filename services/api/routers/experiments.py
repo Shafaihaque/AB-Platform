@@ -79,6 +79,17 @@ async def list_variants(experiment_id: str):
     return [VariantResponse(**dict(row)) for row in rows]
 
 
+@router.delete("/{experiment_id}", status_code=204)
+async def delete_experiment(experiment_id: str):
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM experiments WHERE id = $1", experiment_id
+        )
+    if result == "DELETE 0":
+        raise HTTPException(status_code=404, detail="Experiment not found")
+
+
 @router.post("/{experiment_id}/variants", response_model=VariantResponse, status_code=201)
 async def create_variant(experiment_id: str, body: VariantCreate):
     """Adds a variant to an existing experiment."""

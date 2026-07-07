@@ -1,21 +1,66 @@
 import { useState, useEffect } from "react";
-import type { ExperimentResult } from "../types";
+import type { ExperimentResult, Experiment } from "../types";
 import AIInterpretation from "./AIInterpretation";
+import VariantManager from "./VariantManager";
 
 interface Props {
-  experimentId: string
-  experimentName: string
+  experiment: Experiment
+  onUpdate: () => void
 }
 
-export default function ExperimentResults({ experimentId, experimentName }: Props) {
+export default function ExperimentResults({ experiment, onUpdate }: Props) {
   const [result, setResult] = useState<ExperimentResult | null>(null);
 
   useEffect(() => {
     setResult(null);
-    fetch(`/api/results/${experimentId}`)
+    fetch(`/api/results/${experiment.id}`)
       .then((res) => res.json())
       .then((data) => setResult(data));
-  }, [experimentId]);
+  }, [experiment.id]);
+
+  const patchStatus = async (newStatus: string) => {
+    await fetch(`/api/experiments/${experiment.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    onUpdate();
+  };
+
+  const renderButtons = () => {
+    switch (experiment.status) {
+      case "draft":
+        return (
+          <button onClick={() => patchStatus("running")} className="text-xs font-medium bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors">
+            Start
+          </button>
+        );
+      case "running":
+        return (
+          <div className="flex gap-2">
+            <button onClick={() => patchStatus("paused")} className="text-xs font-medium bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 transition-colors">
+              Pause
+            </button>
+            <button onClick={() => patchStatus("stopped")} className="text-xs font-medium bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors">
+              Stop
+            </button>
+          </div>
+        );
+      case "paused":
+        return (
+          <div className="flex gap-2">
+            <button onClick={() => patchStatus("running")} className="text-xs font-medium bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors">
+              Resume
+            </button>
+            <button onClick={() => patchStatus("stopped")} className="text-xs font-medium bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors">
+              Stop
+            </button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   if (!result) {
     return (
@@ -41,14 +86,17 @@ export default function ExperimentResults({ experimentId, experimentName }: Prop
       <div className="px-6 py-5 border-b border-gray-100">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{experimentName}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{experiment.name}</h2>
             <p className="text-sm text-gray-500 mt-0.5">{totalUsers.toLocaleString()} total users</p>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-xs text-gray-400 mb-0.5">p-value</p>
-            <p className="text-sm font-mono font-semibold text-gray-700">
-              {result.p_value != null ? result.p_value.toFixed(4) : "N/A"}
-            </p>
+          <div className="flex items-center gap-4 shrink-0">
+            {renderButtons()}
+            <div className="text-right">
+              <p className="text-xs text-gray-400 mb-0.5">p-value</p>
+              <p className="text-sm font-mono font-semibold text-gray-700">
+                {result.p_value != null ? result.p_value.toFixed(4) : "N/A"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -109,7 +157,8 @@ export default function ExperimentResults({ experimentId, experimentName }: Prop
       </div>
 
       <div className="px-6 pb-5">
-        <AIInterpretation experimentId={experimentId} />
+        <VariantManager experimentId={experiment.id} experimentStatus={experiment.status} onUpdate={onUpdate} />
+        <AIInterpretation experimentId={experiment.id} />
       </div>
     </div>
   );
