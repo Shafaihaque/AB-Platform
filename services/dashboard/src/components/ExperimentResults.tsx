@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ExperimentResult } from "../types";
+import AIInterpretation from "./AIInterpretation";
 
 interface Props {
   experimentId: string
@@ -105,6 +106,10 @@ export default function ExperimentResults({ experimentId, experimentName }: Prop
             </div>
           );
         })}
+      </div>
+
+      <div className="px-6 pb-5">
+        <AIInterpretation experimentId={experimentId} />
       </div>
     </div>
   );

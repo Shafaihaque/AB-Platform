@@ -4,3 +4,4 @@ asyncpg==0.30.0
 scipy==1.14.1
 requests==2.32.3
 clickhouse-connect==0.7.16
+anthropic>=0.40.0
