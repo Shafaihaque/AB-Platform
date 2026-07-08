@@ -58,12 +58,19 @@ Data Flow:
 
 ## Tech Stack
 FastAPI — async Python API, chosen for native async support with asyncpg
+
 Go — ingest service, chosen for performance and low memory use on high volume event writes
+
 Kafka — acts as a queue so the ingest service never blocks waiting for ClickHouse
+
 ClickHouse — columnar database that is made to efficiently store billions of events
+
 Postgres — relational database that stores experiments and variants
+
 Dashboard UI - composed of React, TypeScript, and Tailwind 
+
 SciPy — chi-squared test for statistical significance (p < 0.05)
+
 Claude API (Haiku) — AI result interpretation
 
 ## Running Locally
