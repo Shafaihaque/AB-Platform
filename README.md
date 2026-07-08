@@ -67,9 +67,103 @@ SciPy — chi-squared test for statistical significance (p < 0.05)
 Claude API (Haiku) — AI result interpretation
 
 ## Running Locally
-todo
+### 1. Start infrastructure
+
+```bash
+docker compose up -d
+```
+
+Starts Postgres, ClickHouse, Kafka, and Zookeeper.
+
+### 2. FastAPI
+
+```bash
+cd services/api
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+### 3. Go ingest
+
+```bash
+cd services/ingest
+go run .
+```
+
+### 4. Kafka consumer
+
+```bash
+cd services/consumer
+pip install -r requirements.txt
+python3 main.py
+```
+
+### 5. Dashboard
+
+```bash
+cd services/dashboard
+npm install
+npm run dev
+```
+
+Dashboard at http://localhost:5173
+
+### Environment variables
+
+Create services/api/.env:
+
+```
+ANTHROPIC_API_KEY=your-key-here
+```
+
+### Infrastructure ports
+
+| Service | Port |
+|---|---|
+| Postgres | 5432 |
+| ClickHouse | 8123 |
+| Kafka | 9092 |
+### Simulating Traffic
+
+```bash
+cd scripts
+python3 simulate_traffic.py
+```
+
+Finds all running experiments, seeds traffic with configurable conversion rates per variant, and fires requests at the same time.
 
 ## How It Works
-todo
+
+### User assignment
+```GET /assign?experiment_id=...&user_id=...```
+
+Returns a variant for a given user. The same user always gets the same variant regardless of when they call it.
+
+### Event tracking
+```POST /events (Go ingest service)```
+
+Accepts exposure and conversion event types. It then validates them, publishes to Kafka, is consumed by the Python worker, and written to ClickHouse.
+
+### Results
+```GET /results/{experiment_id}```
+
+Joins Postgres variant names with ClickHouse event information in Python. Runs a chi-squared test to determine statistical significance at p < 0.05.
+
+### AI interpretation
+```GET /results/{experiment_id}/interpret```
+
+The experiment results are passed to Claude with a prompt. It returns a 2-3 sentence simple analysis with a recommendation on whether to keep running the experiment, and to ship it out or not.
+
 ## SDK Usage
-todo
+
+```ts
+const ab = new ABPlatform("http://localhost:8000", "http://localhost:8080")
+
+// Assign a user to a variant (triggered on page load)
+const { variant_name, variant_id } = await ab.assign(experimentId, userId)
+
+// Track exposure (fires automatically when assigning)
+await ab.track(experimentId, variantId, userId, "exposure")
+
+// Track conversion — (triggered by user action)
+await ab.track(experimentId, variantId, userId, "conversion")
