@@ -2,6 +2,11 @@
 A self-serve A/B experimentation platform built from scratch. Any app can integrate from the SDK to run experiments,  assign users to variants, track events at scale, and view statistically-analyzed results from an Al interpretation layer using Claude API.
 
 Built to demonstrate distributed systems design: event streaming with Kafka, columnar analytics with ClickHouse, statistical significance testing, and LLM integration.
+
+## Demo
+
+[![Watch the demo](https://img.youtube.com/vi/aD53llQsRs8/0.jpg)](https://youtu.be/aD53llQsRs8)
+
 ## Architecture
 ```mermaid
 flowchart TD
