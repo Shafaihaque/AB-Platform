@@ -7,6 +7,7 @@ import (
 
 	"github.com/ab-platform/ingest/handlers"
 	kafkapkg "github.com/ab-platform/ingest/kafka"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,6 +20,7 @@ func main() {
 
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/events", handlers.HandleEvent)
+	http.Handle("/metrics", promhttp.Handler())
 
 	log.Println("Ingest service listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

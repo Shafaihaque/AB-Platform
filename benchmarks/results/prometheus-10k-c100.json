@@ -1,0 +1,36 @@
+{
+  "run_id": "benchmark-79d0152f-e5f6-4180-9273-f54da026c9d4",
+  "generated_at": "2026-07-17T00:12:12.817718+00:00",
+  "configuration": {
+    "requested_events": 10000,
+    "concurrency": 100,
+    "ingest_url": "http://localhost:8080/events",
+    "clickhouse_url": "http://localhost:8123"
+  },
+  "publish": {
+    "attempted": 10000,
+    "accepted": 10000,
+    "failed": 0,
+    "request_timeouts": 0,
+    "connection_errors": 0,
+    "status_codes": {
+      "202": 10000
+    },
+    "duration_seconds": 3.929,
+    "accepted_per_second": 2545.208,
+    "latency_ms": {
+      "mean": 39.12,
+      "p50": 38.102,
+      "p95": 63.58,
+      "p99": 77.262,
+      "max": 108.038
+    }
+  },
+  "delivery": {
+    "stored_events": 10000,
+    "missing_events": 0,
+    "catch_up_seconds": 0.013,
+    "end_to_end_seconds": 3.947,
+    "complete": true
+  }
+}

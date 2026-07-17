@@ -1,0 +1,4 @@
+timestamp,go_cpu_percent,go_memory_mib,consumer_cpu_percent,consumer_memory_mib,kafka_cpu_percent,kafka_memory_mib,clickhouse_cpu_percent,clickhouse_memory_mib,zookeeper_cpu_percent,zookeeper_memory_mib,postgres_cpu_percent,postgres_memory_mib,redis_cpu_percent,redis_memory_mib
+2026-07-16T23:07:13.402598+00:00,0.0,7.875,0.0,9.359375,2.73,412.5,5.16,1871.872,0.08,120.0,0.09,25.45,2.08,15.63
+2026-07-16T23:07:15.426905+00:00,0.0,5.8125,0.1,9.453125,21.14,412.6,4.0,1870.848,0.48,120.0,0.0,25.46,0.59,15.63
+2026-07-16T23:07:17.469006+00:00,0.0,5.734375,0.1,9.515625,3.25,413.0,6.39,1867.776,0.14,120.0,0.0,25.46,0.87,15.38
