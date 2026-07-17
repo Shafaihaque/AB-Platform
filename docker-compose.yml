@@ -57,6 +57,17 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  grafana:
+    image: grafana/grafana:13.0.2
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
   # ── Kafka ──────────────────────────────────────────────────────────────────
 
   zookeeper:
@@ -105,3 +116,4 @@ volumes:
   postgres_data:
   clickhouse_data:
   prometheus_data:
+  grafana_data:

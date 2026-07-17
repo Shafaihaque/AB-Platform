@@ -4,7 +4,8 @@ import os
 import time
 from kafka import KafkaConsumer
 import clickhouse_connect
-from prometheus_client import Counter, Histogram, start_http_server
+import psutil
+from prometheus_client import Counter, Gauge, Histogram, start_http_server
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger(__name__)
@@ -34,6 +35,21 @@ CLICKHOUSE_INSERT_DURATION = Histogram(
 CLICKHOUSE_INSERT_ERRORS = Counter(
     "ab_consumer_clickhouse_insert_errors_total",
     "Total failed ClickHouse batch inserts.",
+)
+PROCESS = psutil.Process()
+PROCESS_CPU_SECONDS = Gauge(
+    "ab_consumer_process_cpu_seconds",
+    "Total user and system CPU time used by the consumer process.",
+)
+PROCESS_RESIDENT_MEMORY_BYTES = Gauge(
+    "ab_consumer_process_resident_memory_bytes",
+    "Resident memory used by the consumer process.",
+)
+PROCESS_CPU_SECONDS.set_function(
+    lambda: PROCESS.cpu_times().user + PROCESS.cpu_times().system
+)
+PROCESS_RESIDENT_MEMORY_BYTES.set_function(
+    lambda: PROCESS.memory_info().rss
 )
 
 
