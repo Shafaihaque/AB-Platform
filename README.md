@@ -52,6 +52,59 @@ Data Flow:
 5. The dashboard queries FastAPI for the results, including Postgres for variant metadata, and ClickHouse for event counts.
 6. Claude interprets the statistical results and returns a simple language recommendation on whether to ship or not
 
+## Performance & Observability
+
+The event pipeline was load-tested with 1,000,000 synthetic events at a concurrency of 100. It sustained 1,839 events per second with 100% delivery, zero failed requests, and 113 ms p95 HTTP latency.
+
+<img width="1680" height="940" alt="Grafana dashboard showing the one-million-event pipeline benchmark" src="https://github.com/user-attachments/assets/c02bca03-cd30-447c-bed7-5a76cc6bb084" />
+
+The dashboard monitors ingestion and consumption throughput, Kafka consumer lag, stage-level p95 latency, consumer batch size, pipeline errors, CPU usage, and memory usage.
+
+### Benchmark Results
+
+| Workload | Throughput | p50 HTTP latency | p95 HTTP latency | Consumer catch-up | Delivery |
+|---:|---:|---:|---:|---:|---:|
+| 100K average (3 runs) | 2,142 events/s | 41 ms | 96 ms | 31 ms average | 100% |
+| 250K | 1,778 events/s | 46 ms | 128 ms | 56 ms | 100% |
+| 500K | 1,994 events/s | 43 ms | 106 ms | 29 ms | 100% |
+| 1M | 1,839 events/s | 47 ms | 113 ms | 201 ms | 100% |
+
+All listed benchmarks were completed with zero failed HTTP requests, zero observed Kafka publishing or ClickHouse insertion errors, and ensure alignment between accepted events and ClickHouse row counts. Peak Kafka consumer lag was 400 events across the full test series and 300 events during the 1M run.
+
+### Methodology
+
+Benchmarks were run locally on a 2020 M1 MacBook Air with 8 GB of memory. The Go ingest service and Python consumer ran directly on macOS, while Kafka, ClickHouse, Prometheus, and Grafana ran in Docker.
+
+Each test used:
+
+- 100 concurrent HTTP workers
+- A unique synthetic experiment ID
+- One unique user per exposure event
+- Two alternating synthetic variants
+- HTTP `202 Accepted` responses to count successfully ingested events
+- A final ClickHouse query filtered by the unique experiment ID to verify delivery
+
+The throughput was calculated as accepted events divided by publishing duration. Request latency was measured by the benchmark client. After publishing finished, the script continued polling ClickHouse until its stored event count matched the number of accepted events or the drain timeout was reached.
+
+Prometheus scraped the Go service, Python consumer, and Kafka Exporter every second. Grafana visualized throughput, consumer lag, stage-level latency, batch size, errors, CPU, and memory throughout each run.
+
+### Reproducing the Benchmark
+
+The infrastructure, Go ingest service, and Python consumer must be running. From that, execute the following from the repository root:
+
+```bash
+scripts/.venv/bin/python scripts/benchmark_pipeline.py \
+  --events 1000000 \
+  --concurrency 100 \
+  --output benchmarks/results/benchmark-1m-c100.json
+```
+
+Use a smaller value such as 10000 to verify it is working. The optional --output argument saves the complete benchmark report as JSON.
+
+### Limitations
+
+We ran these tests using synthetic traffic on a single local machine, with just one Kafka broker, one topic partition, and one consumer. The benchmark measures how the event pipeline performs under a steady load of 100 concurrent HTTP requests. It is not designed to simulate a million users or reflect the capacity of a full production setup. It checks that ingestion, Kafka buffering, consumer processing, ClickHouse delivery, and local resource usage stay stable. It does not test multiple consumers, multiple Kafka partitions, network issues, service restarts, or traffic coming from different geographic locations.
+
 ## Services
 | Service | Language | Port | Description |
 |---|---|---|---|
