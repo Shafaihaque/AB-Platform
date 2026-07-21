@@ -34,6 +34,11 @@ flowchart TD
         UI[React Dashboard\ncreate, manage and results]
     end
 
+    subgraph Observability
+        PROM[Prometheus\n:9090]
+        GRAFANA[Grafana\n:3000]
+        KEXP[Kafka Exporter\n:9308]
+    end
     FB -->|GET /assign| API
     FB -->|POST /events| GI
     GI -->|publish| KF
@@ -42,7 +47,12 @@ flowchart TD
     API <-->|read/write| PG
     API -->|results query| CH
     API -->|interpret| CLAUDE
-    UI -->|all endpoints| API 
+    UI -->|all endpoints| API
+    PROM -->|scrape metrics| GI
+    PROM -->|scrape metrics :9101| KC
+    PROM -->|scrape metrics| KEXP
+    KEXP -->|read consumer-group offsets| KF
+    GRAFANA -->|query metrics| PROM
 ```
 Data Flow: 
 1. A user loads FocusBoard —> the SDK calls /assign to bucket them into a variant. A user will always get the same variant.
@@ -113,6 +123,9 @@ We ran these tests using synthetic traffic on a single local machine, with just 
 | `services/consumer` | Python | — | Kafka consumer that writes events to ClickHouse |
 | `services/dashboard` | React / TypeScript | 5173 | experiment management UI |
 | `packages/sdk` | TypeScript | — | Client SDK for assignment and event tracking |
+| `prometheus` | Prometheus | 9090 | Scrapes and stores metrics from Go, the Python consumer, and Kafka Exporter |
+| `kafka-exporter` | Go | 9308 | Exposes Kafka consumer group lag and offset metrics |
+| `grafana` | Grafana | 3000 | Displays pipeline throughput, latency, lag, errors, batching, CPU, and memory |
 
 ## Tech Stack
 FastAPI — async Python API, chosen for native async support with asyncpg
@@ -131,6 +144,14 @@ SciPy — chi-squared test for statistical significance (p < 0.05)
 
 Claude API (Haiku) — AI result interpretation
 
+Prometheus — scrapes and stores time series metrics from the Go ingest service, Python consumer, and Kafka Exporter
+
+Kafka Exporter — exposes Kafka consumer group offsets and lag in a format Prometheus can collect
+
+Grafana — visualizes pipeline throughput, latency, Kafka lag, errors, consumer batching, CPU, and memory
+
+Docker Compose — runs the local infrastructure and observability services with configuration that can be reproduced
+
 ## Running Locally
 ### 1. Start infrastructure
 
@@ -138,7 +159,7 @@ Claude API (Haiku) — AI result interpretation
 docker compose up -d
 ```
 
-Starts Postgres, ClickHouse, Kafka, and Zookeeper.
+Starts PostgreSQL, ClickHouse, Kafka, ZooKeeper, Redis, Prometheus, Kafka Exporter, and Grafana.
 
 ### 2. FastAPI
 
@@ -183,11 +204,35 @@ ANTHROPIC_API_KEY=your-key-here
 
 ### Infrastructure ports
 
-| Service | Port |
-|---|---|
-| Postgres | 5432 |
-| ClickHouse | 8123 |
-| Kafka | 9092 |
+| Service | Port | Purpose |
+|---|---:|---|
+| PostgreSQL | 5432 | Experiment and variant metadata |
+| Redis | 6379 | Application caching |
+| ClickHouse HTTP | 8123 | Analytical queries and event delivery verification |
+| ClickHouse native | 9000 | Native ClickHouse client connections |
+| Kafka | 9092 | Event broker |
+| Prometheus | 9090 | Metrics queries and target status |
+| Kafka Exporter | 9308 | Kafka consumer group metrics |
+| Grafana | 3000 | Observability dashboard |
+| Consumer metrics | 9101 | Python consumer Prometheus endpoint |
+
+### Observability Dashboard
+
+Grafana is available at [http://localhost:3000](http://localhost:3000). When you are in the login page use the default credentials `admin` / `admin`. 
+
+The **AB Platform Pipeline** dashboard displays:
+
+- Go ingestion and Python consumer throughput
+- Kafka consumer lag
+- Go HTTP, Kafka publish, and ClickHouse insert p95 latency
+- Average consumer batch size
+- Kafka publishing and ClickHouse insertion errors
+- Go and Python consumer CPU and memory usage
+
+Prometheus is available at [http://localhost:9090](http://localhost:9090), and Kafka Exporter metrics are available at [http://localhost:9308/metrics](http://localhost:9308/metrics).
+
+The Go ingest service and Python consumer must be running for their specific dashboard metrics to appear.
+
 ### Simulating Traffic
 
 ```bash
